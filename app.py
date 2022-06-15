@@ -18,28 +18,19 @@ if data is not None:
     l_values = df.loc[df['staircase_loop.intensity'].isna() == False, 'staircase_loop.intensity'].reset_index(drop=True)
 
     def reversals(l_values):
-        l_reversals = []
-        for (el_before, el, el_after) in zip(l_values[:-2], l_values[1:-1], l_values[-2:]):
-            if (el_before > el and el_after > el) or (el_before < el and el_after < el):
-                l_reversals.append(el)
+    l_reversals = []
+    
+    if len(l_values) < 3:
         return l_reversals
-
-    # def reversals(l_values):
-    #     n = 1
-    #     state = 'down'
-    #     l_reversals = []
-    #     while n in range(len(l_values)):
-    #         if state == 'down':
-    #             if l_values[n] > l_values[n - 1]:
-    #                 state = 'up'
-    #                 l_reversals.append(l_values[n-1])
-    #             n += 1
-    #         elif state == 'up':
-    #             if l_values[n] < l_values[n - 1]:
-    #                 state = 'down'
-    #                 l_reversals.append(l_values[n-1])
-    #             n +=1
-    #     return l_reversals
+    
+    asc = False
+    desc = True
+    
+    for el, el_after in zip(l_values[:-1], l_values[1:]):
+        if (asc and el_after < el) or (desc and el_after > el):
+            desc, asc = asc, desc
+            l_reversals.append(el)
+    return l_reversals
 
     with st.container():
         col1, col2 = st.columns(2)
