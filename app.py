@@ -5,7 +5,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from statistics import mean
 
-title_1 = '<p style="font-family:Courier; color:Black; font-size: 60px; font-weight:bold;">TBD</p>'
+
+title_1 = '<p style="font-family:Courier; color:Black; font-size: 60px; font-weight:bold;">Psychopy Data Reader</p>'
 st.markdown(title_1, unsafe_allow_html=True)
 st.text('Work hard... Play hard')
 
@@ -18,7 +19,7 @@ if data is not None:
     with st.container():
         subtitle_1 = '<p style="font-family:Courier; color:Black; font-size: 40px; font-weight:bold;">Stage 1 = Training</p>'
         st.markdown(subtitle_1, unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
 
         with col1:
             
@@ -70,7 +71,7 @@ if data is not None:
                     st.subheader(f'Total Trials \n {str(s2_r2_trials)}') 
 
                     st.subheader('List Answers')
-                    st.write(s2_r2_trials)
+                    st.write(s2_r2_answers)
 
                     st.subheader('Total incorrect answers')
                     st.write(s2_r2_errors)
@@ -95,7 +96,7 @@ if data is not None:
                         st.subheader(f'Total Trials \n {str(s2_r3_trials)}') 
 
                         st.subheader('List Answers')
-                        st.write(s2_r3_trials)
+                        st.write(s2_r3_answers)
 
                         st.subheader('Total incorrect answers')
                         st.write(s2_r3_errors)
@@ -142,7 +143,7 @@ if data is not None:
                     st.subheader(f'Total Trials \n {str(s3_r2_trials)}') 
 
                     st.subheader('List Answers')
-                    st.write(s3_r2_trials)
+                    st.write(s3_r2_answers)
 
                     st.subheader('Total incorrect answers')
                     st.write(s3_r2_errors)
@@ -167,7 +168,7 @@ if data is not None:
                         st.subheader(f'Total Trials \n {str(s3_r3_trials)}') 
 
                         st.subheader('List Answers')
-                        st.write(s3_r3_trials)
+                        st.write(s3_r3_answers)
 
                         st.subheader('Total incorrect answers')
                         st.write(s3_r3_errors)
@@ -181,7 +182,7 @@ if data is not None:
        
 
     with st.container():
-        subtitle_4 = '<p style="font-family:Courier; color:Black; font-size: 40px; font-weight:bold;">Stage  = Noise</p>'
+        subtitle_4 = '<p style="font-family:Courier; color:Black; font-size: 40px; font-weight:bold;">Stage 4 = Staircase</p>'
         st.markdown(subtitle_4, unsafe_allow_html=True)
 
         l_values = df.loc[df['staircase_loop.intensity'].isna() == False, 'staircase_loop.intensity'].reset_index(drop=True)
@@ -206,6 +207,7 @@ if data is not None:
                 elif (asc and l_values[idx+1] < l_values[idx]) or (desc and l_values[idx+1] > l_values[idx]): #a trend and then if a value goes agains the trend is considered reversal and the state of trend is changed
                     desc, asc = asc, desc
                     l_reversals.append([idx, key, value])
+            print(l_reversals, type(l_reversals))  
             return l_reversals   
         
         col1, col2 = st.columns(2)
@@ -231,13 +233,13 @@ if data is not None:
 
         with col2:
             st.subheader('Mean of last reversals')
-            st.write('Last Two = '+ str(new_df['staircase_loop.intensity'].loc[-2:].mean()))
-            st.write('Last Three = '+ str(new_df['staircase_loop.intensity'].loc[-3:].mean()))
-            st.write('Last Four = '+ str(new_df['staircase_loop.intensity'].loc[-4:].mean()))
+            st.write(f'Last two = {mean([i[1] for i in reversals(l_values)][-2:])}')
+            st.write(f'Last three = {mean([i[1] for i in reversals(l_values)][-3:])}')
+            st.write(f'Last four = {mean([i[1] for i in reversals(l_values)][-4:])}')
 
     
             st.subheader('Total incorrect answers')
-            st.write(new_df[new_df['staircase_loop.response'] == 0.0, 'staircase_loop.response'].count())
+            st.write(df.loc[df['staircase_loop.response'] == 0.0, 'staircase_loop.response'].value_counts())
         
             total_s_trial = df['staircase_loop.thisTrialN'].loc[df['staircase_loop.thisTrialN'].isna() == False].count()
             st.subheader('Total Staircase Trials')
