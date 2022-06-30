@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
 from statistics import mean
+import csv
+import tempfile
 
 
 title_1 = '<p style="font-family:Courier; color:Black; font-size: 60px; font-weight:bold;">Psychopy Data Reader</p>'
@@ -11,7 +13,7 @@ st.markdown(title_1, unsafe_allow_html=True)
 st.text('Work hard... Play hard')
 
 data = st.file_uploader("Upload a Dataset", type=["csv"])
-
+results = []
 
 if data is not None:
     df = pd.read_csv(data) 
@@ -33,6 +35,8 @@ if data is not None:
             s1_errors = s1_answers[s1_answers['key_resp.corr'] == 0].value_counts()
             st.subheader('Total incorrect answers')
             st.write(s1_errors)
+        results.append([{'training_trials' : s1_trials} , {'training_answers' : s1_answers }, {'training_incorrect' : s1_errors}])
+
 
     with st.container():
         subtitle_2 = '<p style="font-family:Courier; color:Black; font-size: 40px; font-weight:bold;">Stage 2 = No noise</p>'
@@ -129,57 +133,6 @@ if data is not None:
             st.subheader('Total incorrect answers')
             st.write(s3_r1_errors)
 
-        with col2:
-            if 'noise2_rep.keys' in df:
-                s3_r2_trials = df['noise2_rep.keys'].loc[df['noise2_rep.keys'].isin(['right', 'left']) ].count()
-                s3_r2_answers = df.loc[df['noise2_rep.keys'].isin(['right', 'left']), ['noise2_rep.keys', 'noise2_rep.corr']]
-                s3_r2_errors = s3_r2_answers[s3_r2_answers['noise2_rep.corr'] == 0].value_counts()
-
-                if int(s3_r2_trials) > 1:
-
-                    subheader_7 = '<p style="font-family:Courier; color:Black; font-size: 24px; font-weight:bold;">Round 2</p>'
-                    st.markdown(subheader_7, unsafe_allow_html=True)
-                    
-                    st.subheader(f'Total Trials \n {str(s3_r2_trials)}') 
-
-                    st.subheader('List Answers')
-                    st.write(s3_r2_answers)
-
-                    st.subheader('Total incorrect answers')
-                    st.write(s3_r2_errors)
-                else: 
-                    subheader_8 = '<p style="font-family:Courier; color:Black; font-size: 24px; font-weight:bold;">No Repetition needed</p>'
-                    st.markdown(subheader_8, unsafe_allow_html=True)
-            else: 
-                subheader_8 = '<p style="font-family:Courier; color:Black; font-size: 24px; font-weight:bold;">No Repetition needed</p>'
-                st.markdown(subheader_8, unsafe_allow_html=True)
-
-        with col3:
-            if 'noise3_rep.keys' in df:
-                s3_r3_trials = df['noise3_rep.keys'].loc[df['noise3_rep.keys'].isin(['right', 'left']) ].count()
-                s3_r3_answers = df.loc[df['noise3_rep.keys'].isin(['right', 'left']), ['noise3_rep.keys', 'noise3_rep.corr']]
-                s3_r3_errors = s3_r3_answers[s3_r3_answers['noise3_rep.corr'] == 0].value_counts()
-
-                if int(s3_r3_trials) > 1:
-
-                        subheader_9 = '<p style="font-family:Courier; color:Black; font-size: 24px; font-weight:bold;">Round 3</p>'
-                        st.markdown(subheader_9, unsafe_allow_html=True)
-                        
-                        st.subheader(f'Total Trials \n {str(s3_r3_trials)}') 
-
-                        st.subheader('List Answers')
-                        st.write(s3_r3_answers)
-
-                        st.subheader('Total incorrect answers')
-                        st.write(s3_r3_errors)
-                else: 
-                    subheader_10 = '<p style="font-family:Courier; color:Black; font-size: 24px; font-weight:bold;">No Repetition needed</p>'
-                    st.markdown(subheader_10, unsafe_allow_html=True)
-            else: 
-                subheader_10 = '<p style="font-family:Courier; color:Black; font-size: 24px; font-weight:bold;">No Repetition needed</p>'
-                st.markdown(subheader_10, unsafe_allow_html=True)
-
-       
 
     with st.container():
         subtitle_4 = '<p style="font-family:Courier; color:Black; font-size: 40px; font-weight:bold;">Stage 4 = Staircase</p>'
@@ -207,7 +160,6 @@ if data is not None:
                 elif (asc and l_values[idx+1] < l_values[idx]) or (desc and l_values[idx+1] > l_values[idx]): #a trend and then if a value goes agains the trend is considered reversal and the state of trend is changed
                     desc, asc = asc, desc
                     l_reversals.append([idx, key, value])
-            print(l_reversals, type(l_reversals))  
             return l_reversals   
         
         col1, col2 = st.columns(2)
@@ -219,7 +171,8 @@ if data is not None:
             st.write(df.loc[df['staircase_loop.response'].isna() == False, ['staircase_loop.intensity','CorrectAns','staircase_loop.response']].reset_index(drop=True))
         
         with col2:
-            st.subheader('Plot')
+            total_s_trial = df['staircase_loop.thisTrialN'].loc[df['staircase_loop.thisTrialN'].isna() == False].count()
+            st.subheader(f'Total Staircase Trials = {total_s_trial}')
             fig, ax = plt.subplots()
             ax.plot(l_values.index.to_list(), l_values )
             st.pyplot(fig)
@@ -239,8 +192,9 @@ if data is not None:
 
     
             st.subheader('Total incorrect answers')
-            st.write(df.loc[df['staircase_loop.response'] == 0.0, 'staircase_loop.response'].value_counts())
-        
-            total_s_trial = df['staircase_loop.thisTrialN'].loc[df['staircase_loop.thisTrialN'].isna() == False].count()
-            st.subheader('Total Staircase Trials')
-            st.title(total_s_trial)
+            staircase_answers = df.loc[df['staircase_loop.response'].isna() == False, ['CorrectAns','staircase_loop.response']].reset_index(drop=True)
+            st.write(staircase_answers[staircase_answers['staircase_loop.response'] == 0.0].value_counts())
+    with st.container():
+        results_df = pd.DataFrame(results)
+        with tempfile.NamedTemporaryFile(mode='w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=['training_trials', 'training_answers', 'training_incorrect'])
