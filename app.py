@@ -13,7 +13,32 @@ st.markdown(title_1, unsafe_allow_html=True)
 st.text('Work hard... Play hard')
 
 data = st.file_uploader("Upload a Dataset", type=["csv"])
-results = []
+results = {}
+
+def reversals(l_values):
+    '''function to calculate reversal happening on the staircaise'''
+    l_reversals = []
+    if len(l_values) < 3:
+        return l_reversals
+    # an initial state/trend is defined
+    asc = False
+    desc = True
+    for idx, (key, value) in enumerate(zip(l_values, r_values)):
+        if idx == 0 and value == 0: #We change inital state if first answer is wrong
+            asc = True
+            desc = False
+        if idx == len(l_values) - 1:
+            if (asc and r_values[-3:].all()) or (desc and value == 0):
+                l_reversals.append([idx, key, value])
+        elif (asc and l_values[idx+1] < l_values[idx]) or (desc and l_values[idx+1] > l_values[idx]): #a trend and then if a value goes agains the trend is considered reversal and the state of trend is changed
+            desc, asc = asc, desc
+            l_reversals.append([idx, key, value])
+    return l_reversals   
+
+@st.cache
+def convert_df(df):
+    # IMPORTANT: Cache the conversion to prevent computation on every rerun
+    return df.to_csv().encode('utf-8')
 
 if data is not None:
     df = pd.read_csv(data) 
@@ -35,7 +60,7 @@ if data is not None:
             s1_errors = s1_answers[s1_answers['key_resp.corr'] == 0].value_counts()
             st.subheader('Total incorrect answers')
             st.write(s1_errors)
-        results.append([{'training_trials' : s1_trials} , {'training_answers' : s1_answers }, {'training_incorrect' : s1_errors}])
+        results.update({'training_trials' : [s1_trials] , s1_answers.columns[0] : [s1_answers['key_resp.corr'].to_list()],s1_answers.columns[1] : [s1_answers['key_resp.keys'].to_list()] , 'training_incorrect' : [[s1_errors]]})
 
 
     with st.container():
@@ -114,24 +139,18 @@ if data is not None:
     with st.container():
         subtitle_3 = '<p style="font-family:Courier; color:Black; font-size: 40px; font-weight:bold;">Stage 3 = Noise</p>'
         st.markdown(subtitle_3, unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
+        
+        s3_r1_trials = df['noise1_rep.keys'].loc[df['noise1_rep.keys'].isin(['right', 'left']) ].count()
+        s3_r1_answers = df.loc[df['noise1_rep.keys'].isin(['right', 'left']), ['noise1_rep.keys', 'noise1_rep.corr']]
+        s3_r1_errors = s3_r1_answers[s3_r1_answers['noise1_rep.corr'] == 0].value_counts()
+        
+        st.subheader(f'Total Trials \n {str(s3_r1_trials)}') 
 
-        with col1:
+        st.subheader('List Answers')
+        st.write(s3_r1_answers)
 
-            s3_r1_trials = df['noise1_rep.keys'].loc[df['noise1_rep.keys'].isin(['right', 'left']) ].count()
-            s3_r1_answers = df.loc[df['noise1_rep.keys'].isin(['right', 'left']), ['noise1_rep.keys', 'noise1_rep.corr']]
-            s3_r1_errors = s3_r1_answers[s3_r1_answers['noise1_rep.corr'] == 0].value_counts()
-
-            subheader_6 = '<p style="font-family:Courier; color:Black; font-size: 24px; font-weight:bold;">Round 1</p>'
-            st.markdown(subheader_6, unsafe_allow_html=True)
-            
-            st.subheader(f'Total Trials \n {str(s3_r1_trials)}') 
-
-            st.subheader('List Answers')
-            st.write(s3_r1_answers)
-
-            st.subheader('Total incorrect answers')
-            st.write(s3_r1_errors)
+        st.subheader('Total incorrect answers')
+        st.write(s3_r1_errors)
 
 
     with st.container():
@@ -140,27 +159,6 @@ if data is not None:
 
         l_values = df.loc[df['staircase_loop.intensity'].isna() == False, 'staircase_loop.intensity'].reset_index(drop=True)
         r_values = df.loc[df['staircase_loop.response'].isna() == False, 'staircase_loop.response'].reset_index(drop=True)
-
-        def reversals(l_values):
-            '''function to calculate reversal happening on the staircaise'''
-            l_reversals = []
-            if len(l_values) < 3:
-                return l_reversals
-        
-            # an initial state/trend is defined
-            asc = False
-            desc = True
-
-            for idx, (key, value) in enumerate(zip(l_values, r_values)):
-                if idx == 0 and value == 0: #We change inital state if first answer is wrong
-                    asc = True
-                    desc = False
-                if idx == len(l_values) -1: #Final trial is always a reversal
-                    l_reversals.append([idx, key, value])
-                elif (asc and l_values[idx+1] < l_values[idx]) or (desc and l_values[idx+1] > l_values[idx]): #a trend and then if a value goes agains the trend is considered reversal and the state of trend is changed
-                    desc, asc = asc, desc
-                    l_reversals.append([idx, key, value])
-            return l_reversals   
         
         col1, col2 = st.columns(2)
         col = ['staircase_loop.thisTrialN', 'staircase_loop.intensity', 'staircase_loop.response']
@@ -189,12 +187,20 @@ if data is not None:
             st.write(f'Last two = {mean([i[1] for i in reversals(l_values)][-2:])}')
             st.write(f'Last three = {mean([i[1] for i in reversals(l_values)][-3:])}')
             st.write(f'Last four = {mean([i[1] for i in reversals(l_values)][-4:])}')
-
     
             st.subheader('Total incorrect answers')
             staircase_answers = df.loc[df['staircase_loop.response'].isna() == False, ['CorrectAns','staircase_loop.response']].reset_index(drop=True)
             st.write(staircase_answers[staircase_answers['staircase_loop.response'] == 0.0].value_counts())
     with st.container():
-        results_df = pd.DataFrame(results)
-        with tempfile.NamedTemporaryFile(mode='w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=['training_trials', 'training_answers', 'training_incorrect'])
+        col1,col2,col3 = st.columns(3)
+
+        with col2:
+            results_df = pd.DataFrame.from_dict(results)
+
+            csv = convert_df(results_df)
+
+            st.download_button(
+                label="Download data as CSV",
+                data=csv,
+                file_name=f'analysis_{data.name}',
+                mime='text/csv')
