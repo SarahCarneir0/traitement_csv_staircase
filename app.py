@@ -60,7 +60,7 @@ if data is not None:
             s1_errors = s1_answers[s1_answers['key_resp.corr'] == 0].value_counts()
             st.subheader('Total incorrect answers')
             st.write(s1_errors)
-        results.update({'training_trials' : [s1_trials] , s1_answers.columns[0] : [s1_answers['key_resp.corr'].to_list()],s1_answers.columns[1] : [s1_answers['key_resp.keys'].to_list()] , 'training_incorrect' : [[s1_errors]]})
+        results.update({'training_trials' : [s1_trials] , s1_answers.columns[0] : [s1_answers['key_resp.corr'].to_string(index=False)],s1_answers.columns[1] : [s1_answers['key_resp.keys'].to_string(index=False)] , 'training_incorrect' : [[s1_errors]]})
 
 
     with st.container():
@@ -84,6 +84,7 @@ if data is not None:
 
             st.subheader('Total incorrect answers')
             st.write(s2_r1_errors)
+            results.update({'stage2_1_trials' : [s2_r1_trials] , s2_r1_answers.columns[0] : [s2_r1_answers['nonoise1_rep.corr'].to_string(index=False)],s2_r1_answers.columns[1] : [s2_r1_answers['nonoise1_rep.keys'].to_string(index=False)] , 'srage2_1_incorrect' : [[s2_r1_errors]]})
 
 
         with col2:
@@ -104,6 +105,7 @@ if data is not None:
 
                     st.subheader('Total incorrect answers')
                     st.write(s2_r2_errors)
+                    results.update({'stage2_2_trials' : [s2_r2_trials] , s2_r2_answers.columns[0] : [s2_r2_answers['nonoise2_rep.corr'].to_string(index=False)],s2_r2_answers.columns[1] : [s2_r2_answers['nonoise2_rep.keys'].to_string(index=False)] , 'srage2_2_incorrect' : [[s2_r2_errors]]})
                 else: 
                     subheader_3 = '<p style="font-family:Courier; color:Black; font-size: 24px; font-weight:bold;">No Repetition needed</p>'
                     st.markdown(subheader_3, unsafe_allow_html=True)
@@ -129,6 +131,7 @@ if data is not None:
 
                         st.subheader('Total incorrect answers')
                         st.write(s2_r3_errors)
+                        results.update({'stage2_3_trials' : [s2_r3_trials] , s2_r3_answers.columns[0] : [s2_r3_answers['nonoise3_rep.corr'].to_string(index=False)],s2_r3_answers.columns[1] : [s2_r3_answers['nonoise3_rep.keys'].to_string(index=False)] , 'srage2_3_incorrect' : [[s2_r3_errors]]})
                 else: 
                     subheader_5 = '<p style="font-family:Courier; color:Black; font-size: 24px; font-weight:bold;">No Repetition needed</p>'
                     st.markdown(subheader_5, unsafe_allow_html=True)
@@ -151,7 +154,7 @@ if data is not None:
 
         st.subheader('Total incorrect answers')
         st.write(s3_r1_errors)
-
+        results.update({'stage3_1_trials' : [s3_r1_trials] , s3_r1_answers.columns[0] : [s3_r1_answers['noise1_rep.corr'].to_string(index=False)],s3_r1_answers.columns[1] : [s3_r1_answers['noise1_rep.keys'].to_string(index=False)] , 'srage3_1_incorrect' : [[s3_r1_errors]]})
 
     with st.container():
         subtitle_4 = '<p style="font-family:Courier; color:Black; font-size: 40px; font-weight:bold;">Stage 4 = Staircase</p>'
@@ -190,7 +193,10 @@ if data is not None:
     
             st.subheader('Total incorrect answers')
             staircase_answers = df.loc[df['staircase_loop.response'].isna() == False, ['CorrectAns','staircase_loop.response']].reset_index(drop=True)
-            st.write(staircase_answers[staircase_answers['staircase_loop.response'] == 0.0].value_counts())
+            staircas_incorrect = staircase_answers[staircase_answers['staircase_loop.response'] == 0.0].value_counts()
+            st.write(staircas_incorrect)
+            results.update({'staircase_trials' : [total_s_trial] , staircase_answers.columns[0] : [staircase_answers['CorrectAns'].to_string(index=False)],staircase_answers.columns[1] : [staircase_answers['staircase_loop.response'].to_string(index=False)] , 'staircase_incorrect' : [[staircas_incorrect]]})
+
     with st.container():
         col1,col2,col3 = st.columns(3)
 
